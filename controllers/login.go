@@ -56,7 +56,9 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginResponse := loginResponse{Token: tokenString}
+	loginResponse := loginResponse{
+		Token: tokenString,
+	}
 
 	// send token back in header
 	err = util.WriteJSON(w, http.StatusOK, loginResponse)

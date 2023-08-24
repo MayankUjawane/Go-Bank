@@ -31,7 +31,7 @@ func (s *APIServer) Router() {
 	router.HandleFunc("/account", s.handleCreateAccount).Methods("POST")
 	router.HandleFunc("/account", s.handleGetAccount).Methods("GET")
 	router.HandleFunc("/account/{id}", jwt.WithJWTAuth(s.handleGetAccountByID, s.store)).Methods("GET")
-	router.HandleFunc("/account", s.handleDeleteAccount).Methods("DELETE")
+	router.HandleFunc("/account/{id}", s.handleDeleteAccount).Methods("DELETE")
 	router.HandleFunc("/transfer", s.handleTransfer).Methods("POST")
 
 	log.Println("JSON API server running on port: ", s.listenAddress)

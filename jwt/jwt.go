@@ -32,7 +32,7 @@ func CreateJWT(account *types.Account) (string, error) {
 	}
 
 	secret := os.Getenv("JWT_SECRET")
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(secret))
 }

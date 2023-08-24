@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/MayankUjawane/gobank/types"
 	_ "github.com/lib/pq"
@@ -25,7 +26,7 @@ type PostgresStore struct {
 
 // NewPostgresStore will create connection with the postgres database
 func NewPostgresStore() (*PostgresStore, error) {
-	connStr := "user=postgres dbname=postgres password=gobank sslmode=disable"
+	connStr := os.Getenv("POSTGRES_URL")
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
@@ -45,14 +46,15 @@ func (s *PostgresStore) Init() error {
 }
 
 func (s *PostgresStore) createAccountTable() error {
-	query := `create table if not exists account {
+	query := `create table if not exists account (
 		id serial primary key,
 		first_name varchar(50),
 		last_name varchar(50),
+		hashed_password varchar(100),
 		number serial,
 		balance serial,
 		created_at timestamp
-	}`
+	)`
 
 	_, err := s.db.Exec(query)
 	return err
@@ -60,13 +62,14 @@ func (s *PostgresStore) createAccountTable() error {
 
 func (s *PostgresStore) CreateAccount(acc *types.Account) error {
 	query := `insert into account
-	(first_name, last_name, number, balance, created_at)
-	values($1,$2,$3,$4,$5)`
+	(first_name, last_name, hashed_password, number, balance, created_at)
+	values($1,$2,$3,$4,$5,$6)`
 
-	resp, err := s.db.Query(
+	_, err := s.db.Query(
 		query,
 		acc.FirstName,
 		acc.LastName,
+		acc.HashedPassword,
 		acc.Number,
 		acc.Balance,
 		acc.CreatedAt,
@@ -76,8 +79,6 @@ func (s *PostgresStore) CreateAccount(acc *types.Account) error {
 		return err
 	}
 
-	fmt.Printf("%+v\n", resp)
-
 	return nil
 }
 
@@ -86,8 +87,14 @@ func (s *PostgresStore) DeleteAccount(id int) error {
 	return err
 }
 
-func (s *PostgresStore) GetAccountByFilter(filter string, id int) (*types.Account, error) {
-	rows, err := s.db.Query("select * from account where $1 = $2", filter, id)
+func (s *PostgresStore) GetAccountByFilter(filter string, val int) (*types.Account, error) {
+	query := `select * from account where id = $1`
+
+	if filter == "number" {
+		query = `select * from account where number = $1`
+	}
+
+	rows, err := s.db.Query(query, val)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +103,7 @@ func (s *PostgresStore) GetAccountByFilter(filter string, id int) (*types.Accoun
 		return scanIntoAccount(rows)
 	}
 
-	return nil, fmt.Errorf("account with [%s] %d not found", filter, id)
+	return nil, fmt.Errorf("account with [%s] %d not found", filter, val)
 }
 
 func (s *PostgresStore) GetAllAccounts() ([]*types.Account, error) {
@@ -124,6 +131,7 @@ func scanIntoAccount(rows *sql.Rows) (*types.Account, error) {
 		&account.ID,
 		&account.FirstName,
 		&account.LastName,
+		&account.HashedPassword,
 		&account.Number,
 		&account.Balance,
 		&account.CreatedAt,
