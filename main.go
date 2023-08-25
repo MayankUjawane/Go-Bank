@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/MayankUjawane/gobank/controllers"
 	"github.com/MayankUjawane/gobank/db"
+	"github.com/MayankUjawane/gobank/token"
 	"github.com/MayankUjawane/gobank/types"
 	"github.com/joho/godotenv"
 )
@@ -37,8 +39,9 @@ func main() {
 		seedAccounts(store)
 	}
 
-	server := controllers.NewAPIServer(":3000", store)
-	server.Router()
+	tokenMaker := token.NewJWTMaker(os.Getenv("JWT_SECRET"))
+	server := controllers.NewAPIServer(":3000", store, tokenMaker)
+	server.SetupRouter(tokenMaker)
 }
 
 // for seeding just after runing the program, pass the seed in console
