@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type TransferRequest struct {
-	ToAccount int `json:"toAccount"`
-	Amount    int `json:"amount"`
-}
-
 type ApiError struct {
 	Error string `json:"error"`
 }

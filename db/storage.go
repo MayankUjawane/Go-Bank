@@ -17,6 +17,7 @@ type Storage interface {
 	DeleteAccount(int) error
 	GetAllAccounts() ([]*types.Account, error)
 	GetAccountByFilter(string, int) (*types.Account, error)
+	UpdateBalance(int, int) (*types.Account, error)
 }
 
 // PostgressStore will implement the Storage Interface by providing implementation for all the storage methods
@@ -137,4 +138,23 @@ func scanIntoAccount(rows *sql.Rows) (*types.Account, error) {
 		&account.CreatedAt,
 	)
 	return &account, err
+}
+
+func (s *PostgresStore) UpdateBalance(accNumber, balance int) (*types.Account, error) {
+	query := "update account set balance = $1 where number = $2 returning *"
+	account := types.Account{}
+	err := s.db.QueryRow(query, balance, accNumber).Scan(
+		&account.ID,
+		&account.FirstName,
+		&account.LastName,
+		&account.HashedPassword,
+		&account.Number,
+		&account.Balance,
+		&account.CreatedAt,
+	)
+	if err != nil {
+		error := fmt.Errorf("error while update balance: %s", err.Error())
+		return nil, error
+	}
+	return &account, nil
 }
