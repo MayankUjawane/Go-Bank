@@ -36,6 +36,7 @@ func authMiddleware(tokenMaker token.Maker, next http.HandlerFunc) http.HandlerF
 			return
 		}
 
+		// checking authorization type is bearer or not
 		authorizationType := strings.ToLower(fields[0])
 		if authorizationType != authorizationTypeBearer {
 			err := fmt.Errorf("unsupported authorization type %s", authorizationType)
@@ -43,6 +44,7 @@ func authMiddleware(tokenMaker token.Maker, next http.HandlerFunc) http.HandlerF
 			return
 		}
 
+		// getting claims/payload from token
 		accessToken := fields[1]
 		payload, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
@@ -50,6 +52,7 @@ func authMiddleware(tokenMaker token.Maker, next http.HandlerFunc) http.HandlerF
 			return
 		}
 
+		// saving payload in context, so that we can access it for authorization purpose using authorizationPayloadKey
 		context.Set(r, authorizationPayloadKey, payload)
 
 		// after authentication callind the function

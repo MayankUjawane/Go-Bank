@@ -9,11 +9,12 @@ import (
 	"github.com/MayankUjawane/gobank/controllers"
 	"github.com/MayankUjawane/gobank/db"
 	"github.com/MayankUjawane/gobank/token"
-	"github.com/MayankUjawane/gobank/types"
+	"github.com/MayankUjawane/gobank/util"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// storing seed value as false, will pass true through command prompt whenever required to seed the value
 	seed := flag.Bool("seed", false, "seed teh db")
 	flag.Parse()
 
@@ -29,6 +30,7 @@ func main() {
 		log.Fatalf("error while making connection with db: %s", err)
 	}
 
+	// creating required table in database
 	if err := store.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -36,22 +38,10 @@ func main() {
 	// seed some accounts
 	if *seed {
 		fmt.Println("Seeding the database")
-		seedAccounts(store)
+		util.SeedAccounts(store)
 	}
 
 	tokenMaker := token.NewJWTMaker(os.Getenv("JWT_SECRET"))
 	server := controllers.NewAPIServer(":3000", store, tokenMaker)
 	server.SetupRouter(tokenMaker)
-}
-
-// for seeding just after runing the program, pass the seed in console
-// ./bin/gobank --seed
-func seedAccounts(s db.Storage) {
-	seedAccount(s, "Mayank", "Ujawane", "Hello")
-}
-
-func seedAccount(store db.Storage, fname, lname, pw string) {
-	account := types.NewAccount(fname, lname, pw)
-	fmt.Println("new account number => ", account.Number)
-	store.CreateAccount(account)
 }

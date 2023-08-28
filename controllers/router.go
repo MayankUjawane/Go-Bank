@@ -32,13 +32,13 @@ func (s *APIServer) SetupRouter(tokenMaker token.Maker) {
 
 	router.HandleFunc("/signup", s.handleCreateAccount).Methods("POST")
 	router.HandleFunc("/login", s.handleLogin).Methods("POST")
+
 	router.HandleFunc("/account", s.handleGetAccount).Methods("GET")
+	router.HandleFunc("/account/add", s.addBalance).Methods("POST")
 
 	router.HandleFunc("/account/{id}", authMiddleware(tokenMaker, s.handleGetAccountByID)).Methods("GET")
 	router.HandleFunc("/account/{id}", authMiddleware(tokenMaker, s.handleDeleteAccount)).Methods("DELETE")
-
-	router.HandleFunc("/transfer", s.handleTransfer).Methods("POST")
-	router.HandleFunc("/account/add", s.addBalance).Methods("POST")
+	router.HandleFunc("/transfer", authMiddleware(tokenMaker, s.handleTransfer)).Methods("POST")
 
 	log.Println("JSON API server running on port: ", s.listenAddress)
 

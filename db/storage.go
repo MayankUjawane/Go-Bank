@@ -13,7 +13,7 @@ import (
 // write all methods again.
 // In this case we just need to implement Storage interface with the new database by providing implementation of the storage methods
 type Storage interface {
-	CreateAccount(*types.Account) error
+	CreateAccount(*types.Account) (int, error)
 	DeleteAccount(int) error
 	GetAllAccounts() ([]*types.Account, error)
 	GetAccountByFilter(string, int) (*types.Account, error)
@@ -61,12 +61,14 @@ func (s *PostgresStore) createAccountTable() error {
 	return err
 }
 
-func (s *PostgresStore) CreateAccount(acc *types.Account) error {
+func (s *PostgresStore) CreateAccount(acc *types.Account) (int, error) {
 	query := `insert into account
 	(first_name, last_name, hashed_password, number, balance, created_at)
-	values($1,$2,$3,$4,$5,$6)`
+	values($1,$2,$3,$4,$5,$6)
+	returning id`
 
-	_, err := s.db.Query(
+	var id *int
+	err := s.db.QueryRow(
 		query,
 		acc.FirstName,
 		acc.LastName,
@@ -74,13 +76,13 @@ func (s *PostgresStore) CreateAccount(acc *types.Account) error {
 		acc.Number,
 		acc.Balance,
 		acc.CreatedAt,
-	)
+	).Scan(&id)
 
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return nil
+	return *id, nil
 }
 
 func (s *PostgresStore) DeleteAccount(id int) error {

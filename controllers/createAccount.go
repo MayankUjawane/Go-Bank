@@ -30,10 +30,14 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 
 	// create new account
 	account := types.NewAccount(createAccountReq.FirstName, createAccountReq.LastName, hashedPassword)
-	if err := s.store.CreateAccount(account); err != nil {
+	id, err := s.store.CreateAccount(account)
+	if err != nil {
 		util.WriteJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	// set the id of account
+	account.ID = id
 
 	// response
 	err = util.WriteJSON(w, http.StatusOK, account)

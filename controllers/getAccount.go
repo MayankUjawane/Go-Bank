@@ -30,22 +30,25 @@ func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// fet the account from db
 	account, err := s.store.GetAccountByFilter("id", id)
 	if err != nil {
 		util.WriteJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// check if user is asking for his data only or not
+	// fetch the payload from context
 	authPayload := context.Get(r, authorizationPayloadKey).(*token.Payload)
-	authNumber, err := strconv.Atoi(authPayload.Number)
+	payloadNumber, err := strconv.Atoi(authPayload.Number)
 	if err != nil {
 		error := fmt.Errorf("while conversion in handleAccountGetByID: %s", err.Error())
 		util.WriteJSON(w, http.StatusInternalServerError, error)
 		return
 	}
-	if account.Number != int64(authNumber) {
-		util.WriteJSON(w, http.StatusUnauthorized, "account doesn't belong to user")
+
+	// check if user is asking for his data or not
+	if account.Number != int64(payloadNumber) {
+		util.WriteJSON(w, http.StatusForbidden, "account doesn't belong to user")
 		return
 	}
 

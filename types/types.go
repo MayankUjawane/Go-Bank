@@ -21,7 +21,6 @@ type Account struct {
 
 func NewAccount(firstName, lastName, hashedPassword string) *Account {
 	return &Account{
-		ID:             rand.Intn(10000),
 		FirstName:      firstName,
 		LastName:       lastName,
 		HashedPassword: hashedPassword,

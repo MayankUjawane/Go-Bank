@@ -2,10 +2,14 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/MayankUjawane/gobank/token"
 	"github.com/MayankUjawane/gobank/types"
 	"github.com/MayankUjawane/gobank/util"
+	"github.com/gorilla/context"
 )
 
 type TransferRequest struct {
@@ -26,10 +30,25 @@ func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// taking payload from context
+	authPayload := context.Get(r, authorizationPayloadKey).(*token.Payload)
+	payloadNumber, err := strconv.Atoi(authPayload.Number)
+	if err != nil {
+		error := fmt.Errorf("while conversion in handleTransfer: %s", err.Error())
+		util.WriteJSON(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	// check if user is transferring money form his account
+	if transferReq.FromAccount != payloadNumber {
+		util.WriteJSON(w, http.StatusForbidden, "you can tranfer money from your account only")
+		return
+	}
+
 	// get the details of the account
 	fromAccount, err := s.store.GetAccountByFilter("number", transferReq.FromAccount)
 	if err != nil {
-		util.WriteJSON(w, http.StatusBadRequest, err.Error())
+		util.WriteJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
